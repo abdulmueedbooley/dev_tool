@@ -12,3 +12,4 @@ cur = conn.cursor()
 # cur.execute(**SQL QUERY HERE**)
 conn.commit()
 cur.close()
+
