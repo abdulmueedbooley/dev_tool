@@ -18,10 +18,21 @@ async def home():
 def get_student(student_id : int):
     return students[student_id]
 
+def read_packages(path):
+    packages = []
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            name, assign, version = line.partition('==')
+            packages.append({'name:' : name, 'version:' : version})
+    return packages
 
-conn = psycopg2.connect(host = "localhost", dbname = "postgres", user = "postgres", password = "@bdulmu33d", port = 5050)
-cur = conn.cursor()
-# cur.execute(**SQL QUERY HERE**)
-conn.commit()
-cur.close()
+path = 'C:/Users/abdul/Documents/GitHub/upstream/requirements.txt'
+
+
+
+
+
 
