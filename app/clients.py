@@ -9,13 +9,10 @@ def pypi(name):
         files = data["urls"]
         return {"name" : name, "latest_version" : data["info"]["version"],
                 "license" : data["info"]["license"] or "UNKNOWN",
-                "last_release" : files[0]["upload_time_iso_8601"]
+                "last_release" : files[0]["upload_time_iso_8601"] if files else None,
         }
     else:
         return f"Failed to retrieve data{response.status_code}"
-
-package = 'requests'
-pack_info = pypi(package)
 
 if __name__ == "__main__":
     print(pypi('requests'))
