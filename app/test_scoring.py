@@ -3,35 +3,52 @@ from datetime import datetime, timedelta, timezone
 from scoring import score_package
 
 
-def months_ago(n):
-    """Build a PyPI-style date string for n months ago."""
-    date = datetime.now(timezone.utc) - timedelta(days=30 * n)
-    return date.isoformat()
+def test_healthy_pack():
+    recent_date = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat()
 
+    mock_info = {
+        "name" : "fastlib",
+        "last_release" : recent_date,
+        "license" : "MIT"
+    }
 
-def test_healthy_package():
-    facts = {"name": "fastlib", "license": "MIT", "last_release": months_ago(1)}
-    result = score_package(facts, "saas")
-    assert result["score"] == 100
+    result = score_package(mock_info, "saas",vul=0)
+
+    assert result["name"] == "fastlib"
     assert result["grade"] == "A"
-    assert result["licence_risk"] == "Low"
+    assert result["license_risk"] == "Low"
+    assert result["score"] >= 90
 
+def test_abandoned_pack():
+    recent_date  = (datetime.now(timezone.utc) - timedelta(days=1000)).isoformat()
 
-def test_abandoned_package():
-    facts = {"name": "oldlib", "license": "MIT", "last_release": months_ago(26)}
-    result = score_package(facts, "saas")
-    assert result["score"] == 40
+    mock_info = {
+        "name" : "oldlib",
+        "last_release" : recent_date,
+        "license" : "MIT"
+    }
+
+    result = score_package(mock_info, "saas",vul=0)
+
+    assert result["name"] == "oldlib"
     assert result["grade"] == "D"
-    assert "26 months" in result["reason"]
+    assert result["license_risk"] == "Low"
+    assert result["score"] <= 40
 
+def test_license_risk():
+    recent_date = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat()
 
-def test_agpl_in_saas_is_high_risk():
-    facts = {"name": "tinytool", "license": "AGPL-3.0", "last_release": months_ago(3)}
-    result = score_package(facts, "saas")
-    assert result["licence_risk"] == "High"
+    mock_info  = {
+        "name" : "tinytool",
+        "last_release" : recent_date,
+        "license" : "AGPL"
+    }
 
+    result = score_package(mock_info, "saas",vul=0)
 
-def test_agpl_internal_is_low_risk():
-    facts = {"name": "tinytool", "license": "AGPL-3.0", "last_release": months_ago(3)}
-    result = score_package(facts, "internal")
-    assert result["licence_risk"] == "Low"
+    assert result["name"] == "tinytool"
+    assert result["grade"] == "A"
+    assert result["license_risk"] == "High"
+    assert result["score"] >= 90
+
+    

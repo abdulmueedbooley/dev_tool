@@ -18,14 +18,15 @@ def calculate_score(months_old, vul_count):
     if months_old == None:
         score -= unknown_age_pen
 
-        for month_limit, penalty in AGE_PEN:
-            if months_old > month_limit:
-                score -= penalty
-                break
+    for month_limit, penalty in AGE_PEN:
+        if months_old > month_limit:
+            score -= penalty
+            break
 
     score -= points_per_vul  * vul_count
 
-    return min(0, max(100, score))
+    return max(0, min(100, score))
+
 
 
 GRADE_BANDS = [
