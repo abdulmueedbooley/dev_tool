@@ -13,6 +13,24 @@ project_name = "project SteelWing"
 
 @app.post("/scan-dep/{pack_name}")
 def scan_store_package(pack_name : str, db : Session = Depends(get_db)):
+
+    existing_score = db.execute(health_score.select().where(health_score.c.package_name == pack_name)).first()
+
+    if existing_score:
+        return {
+            "status" : "cache",
+            "message" : f"Data for {pack_name} fetched from database",
+            "health" : {
+                "project_id" : existing_score.project_id,
+                "package_name" : existing_score.package_name,
+                "version" : existing_score.version,
+                "grade" : existing_score.grade,
+                "score" : existing_score.score,
+                "license_risk" : existing_score.license_risk,
+                "reason" : existing_score.reason
+            }
+        }
+
     package = pypi(pack_name)
     health = score_package(package, "saas", vul=0)
 
@@ -20,15 +38,18 @@ def scan_store_package(pack_name : str, db : Session = Depends(get_db)):
         project_name=project_name, project_type="saas", created_at=package["last_release"]
     )
 
+    result = db.execute(project_insert_statement)
+    db.commit()
+
+    health_fk = result.inserted_primary_key[0]
+
     health_score_statement = health_score.insert().values(
-        package_name=pack_name, version=package["latest_version"], grade=health["grade"],
+        project_id=health_fk, package_name=pack_name, version=package["latest_version"], grade=health["grade"],
         score=health["score"], license_risk=health["license_risk"], reason=health["reason"])
 
     db.execute(health_score_statement)
     db.commit()
 
-    result = db.execute(project_insert_statement)
-    db.commit()
 
     return {
         "status" : "success",
