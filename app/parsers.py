@@ -6,7 +6,8 @@ def read_packages(path):
             if not line or line.startswith('#'):
                 continue
             name, assign, version = line.partition('==')
-            packages.append({'name' : name, 'version' : version})
-    return packages
+            clean_name = name.replace("\x00", "").strip()
+            clean_version = version.replace("\x00", "").strip()
 
-path = 'C:/Users/abdul/Documents/GitHub/upstream/requirements.txt'
+            packages.append({'name' : clean_name, 'version' : clean_version})
+    return packages

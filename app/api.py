@@ -5,14 +5,14 @@ from sqlalchemy.orm import Session
 from app.clients import pypi
 from app.models import projects, health_score
 from app.scoring import score_package
+from app.parsers import read_packages
 
 app = FastAPI() # basically acts as the central hub or front door of your application
 # it registers all your routers and starts the web server
 project_name = "project SteelWing"
 
 
-@app.post("/scan-dep/{pack_name}")
-def scan_store_package(pack_name : str, db : Session = Depends(get_db)):
+def scan_single_package(pack_name : str, db : Session):
 
     existing_score = db.execute(health_score.select().where(health_score.c.package_name == pack_name)).first()
 
@@ -58,10 +58,25 @@ def scan_store_package(pack_name : str, db : Session = Depends(get_db)):
     }
 
 
+@app.post("/scan-dep{pack_name}")
+def scan_store_package(pack_name : str, db : Session = Depends(get_db)):
+    return scan_single_package(pack_name, db)
 
 
+@app.post("/scan-requirements")
+def scan_req_file(db : Session = Depends(get_db)):
+    dependency_list = read_packages("requirements.txt")
+    dependencies = [lib["name"] for lib in dependency_list if lib.get("name")]
 
+    results = []
+    for library in dependencies:
+        library_result = scan_single_package(library, db)
+        results.append(library_result)
 
+    return {
+        "Number of libraries" : len(results),
+        "Dependency list" : results,
+    }
 
 
 
