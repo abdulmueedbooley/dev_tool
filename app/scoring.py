@@ -18,10 +18,11 @@ def calculate_score(months_old, vul_count):
     if months_old == None:
         score -= unknown_age_pen
 
-    for month_limit, penalty in AGE_PEN:
-        if months_old > month_limit:
-            score -= penalty
-            break
+    if months_old is not None:
+        for month_limit, penalty in AGE_PEN:
+            if months_old > month_limit:
+                score -= penalty
+                break
 
     score -= points_per_vul  * vul_count
 
@@ -83,6 +84,11 @@ def reasoning(months_old, vul_count, risk):
     return ','.join(parts) + '.'
 
 def score_package(information, project_type, vul=0):
+    if type(information) is not dict:
+        return {
+            "Status" : "Missing PyPi metadata for this package"
+        }
+
     months_old  = months_ago(information["last_release"])
     score = calculate_score(months_old,vul)
     risk = license_risk(information["license"], project_type)
